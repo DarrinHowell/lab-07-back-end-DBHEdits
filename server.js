@@ -26,18 +26,35 @@ function searchToLatLong(query){
     return location;
 }
 
-
-function location(data){
+function Location(data){
     this.formatted_query = data.formatted_address;
     this.latitude = data.geometry.location.lat;
     this.longitude = data.geometry.location.lng;
 }
 
+app.get('/weather', (request, response) => {
+    const weatherData = getWeatherData(request.query.data);
+    response.send(weatherData);
+})
 
+function getWeatherData(query){
+    const darksky = require('./data/darksky.json');
+    const weatherArray = [];
+    const weather = darksky.daily.data.forEach((item)=>{
+        weatherArray.push(new Weather(item));
+    })
+    
+    // new Weather(darksky);
+    // weather.search_query = query;
+    return weatherArray; 
+}
 
+function Weather(data){
+    this.time = data.time;
+    this.forecast = data.summary;
+    console.log(data.summary);
 
-
-
+}
 
 
 
