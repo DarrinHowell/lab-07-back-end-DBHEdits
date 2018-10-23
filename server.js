@@ -58,6 +58,6 @@ function Weather(data){
 
 
 
-app.listen(3000, ()=>{
+app.listen(PORT, ()=>{
     console.log(`app is running on ${PORT}`)
 });
