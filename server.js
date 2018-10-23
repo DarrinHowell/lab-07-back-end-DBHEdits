@@ -43,14 +43,11 @@ function getWeatherData(query){
     const weather = darksky.daily.data.forEach((item)=>{
         weatherArray.push(new Weather(item));
     })
-    
-    // new Weather(darksky);
-    // weather.search_query = query;
     return weatherArray; 
 }
 
 function Weather(data){
-    this.time = data.time;
+    this.time = new Date(data.time*1000).toString().slice(0,15);
     this.forecast = data.summary;
     console.log(data.summary);
 
