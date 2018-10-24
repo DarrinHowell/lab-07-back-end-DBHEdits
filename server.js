@@ -35,15 +35,22 @@ function searchToLatLong(query){
     const geoData = require('./data/geo.json');
     const location = new Location(geoData.results[0]);
     location.search_query = query;
+    console.log(location);
     return location;
 }
 
+// Constructs a location object with the geo.json data input above.
 function Location(data){
     this.formatted_query = data.formatted_address;
     this.latitude = data.geometry.location.lat;
     this.longitude = data.geometry.location.lng;
 }
 
+// This function is essentially the same event listener as the app.get above, and it triggers when it
+// sees /weather in the URL. This function receives the location as the request from the front end. 
+// We then send this request (which is the location data from the front end) into our getWeatherData  function,
+// and we recieve back weather data in the form that we prescribe. 
+// We then send the weather data back to the front end client via response.send().
 app.get('/weather', (request, response) => {
     const weatherData = getWeatherData(request.query.data);
     response.send(weatherData);
