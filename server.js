@@ -14,6 +14,12 @@ app.use(cors());
 
 console.log('server is starting...');
 
+// The variable app is express. Express is a node module containing a library of methods.
+// .get is a way to request information when the parameters '/location' is received in the url.
+// .get is essentially an event listener waiting for a request including /location.
+// Once the event is recieved a callback function with the parameters request and response is activated.
+// request is a massive object and in there we want to access query.data and send it into the searchToLatLong function
+// Once the searchToLatLong function runs and returns data in the format we desire, we send it back to the client.
 app.get('/location', (request, response)=>{
     const locationData = searchToLatLong(request.query.data);
     response.send(locationData); 
