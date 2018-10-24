@@ -25,6 +25,12 @@ app.get('/location', (request, response)=>{
     response.send(locationData); 
 })
 
+// Note: anything dependent on the above code will require a dot then when we query from actual databases
+// because this call is asynchronous.
+
+// Takes in the query as an argument. It then brings in the geo.json data via the require method.
+// The function then consructs a new locaiton based on the geo.json data at index 0.
+// The search query property is added to the object, and then this data is returned.
 function searchToLatLong(query){
     const geoData = require('./data/geo.json');
     const location = new Location(geoData.results[0]);
