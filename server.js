@@ -24,18 +24,19 @@ console.log('server is starting...');
 app.get('/location', (request, response)=>{
   searchToLatLong(request.query.data)
     .then(locationData => {
-        response.send(locationData);
-        console.log('location is: ', locationData);
-        
+      response.send(locationData);
+      console.log('location is: ', locationData);
+
     })
-    
+
     .catch(error => {
       handleError(error, response);
       console.log('error in app.get is: ', error);
     })
 
-
 });
+
+app.get('/weather', getWeather);
 
 function handleError(err, res) {
   console.error('err - ', err);
@@ -83,31 +84,51 @@ function Location(data){
   this.longitude = data.geometry.location.lng;
 }
 
+
+function getWeather(request, response){
+  const _URL = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
+
+  return superagent.get(_URL)
+    .then(result => {
+      let weatherSummary = result.body.daily.data.map(day => {
+        // console.log('this is the structure of time for each day: ', day.time);
+        // console.log('this is the structure of te summary for each day: ', day.summary);
+        return new Weather(day);
+      })
+      console.log('this is our weather summary data', weatherSummary);
+      response.send(weatherSummary);
+    })
+
+    .catch(error => handleError(error, response));
+}
+
+
 // This function is essentially the same event listener as the app.get above, and it triggers when it
 // sees /weather in the URL. This function receives the location as the request from the front end.
 // We then send this request (which is the location data from the front end) into our getWeatherData  function,
 // and we recieve back weather data in the form that we prescribe.
 // We then send the weather data back to the front end client via response.send().
 // app.get('/weather', (request, response) => {
-//   const weatherData = getWeatherData(request.query.data);
-//   response.send(weatherData);
+//   // const weatherData = getWeatherData(request.query.data);
+//   // response.send(weatherData);
+
 // })
 
 // function getWeatherData(query){
 //   const darksky = require('./data/darksky.json');
-//   const weatherArray = [];
-//   const weather = darksky.daily.data.forEach((item)=>{
-//     weatherArray.push(new Weather(item));
-//   })
+//   // const weatherArray = [];
+//   const weather = darksky.daily.data.map((item)=>{
+//     return new Weather(item);
+//   });
 //   return weatherArray;
 // }
 
-// function Weather(data){
-//   this.time = new Date(data.time*1000).toString().slice(0,15);
-//   this.forecast = data.summary;
-//   console.log(data.summary);
+function Weather(data){
+  this.time = new Date(data.time*1000).toString().slice(0,15);
+  this.forecast = data.summary;
+  console.log(data.summary);
 
-// }
+}
 
 
 
