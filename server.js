@@ -38,16 +38,12 @@ app.get('/location', (request, response)=>{
 
 app.get('/weather', getWeather);
 
+app.get('/yelp', getFood);
+
 function handleError(err, res) {
   console.error('err - ', err);
   if(res)res.status(500).send('Sorry, something went wrong');
 }
-
-
-// app.get('/yelp', getFood);
-
-
-
 
 
 //   const locationData = searchToLatLong(request.query.data);
@@ -122,22 +118,31 @@ function Weather(data){
 }
 
 
-// function getFood(request, response){
-//   const _URL = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
+function getFood(request, response){
+  const _URL = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
 
-//   return superagent.get(_URL)
-//     .then(result => {
-//       let weatherSummary = result.body.daily.data.map(day => {
-//         // console.log('this is the structure of time for each day: ', day.time);
-//         // console.log('this is the structure of te summary for each day: ', day.summary);
-//         return new Weather(day);
-//       })
-//       console.log('this is our weather summary data', weatherSummary);
-//       response.send(weatherSummary);
-//     })
+  return superagent.get(_URL)
+    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+    .then(result => {
+      let restaurantData = result.businesses.map(restaurantArr => {
+        return new Restaurant(restaurantArr.name, restaurantArr.image_url,
+          restaurantArr.price, restaurantArr.rating,
+          restaurantArr.url);
+      })
+      console.log('this is our restaurant data', restaurantData);
+      response.send(restaurantData);
+    })
+    .catch(error => handleError(error, response));
+}
 
-//     .catch(error => handleError(error, response));
-// }
+
+function Restaurant(name, image_url, price, rating, url){
+  this.name = name;
+  this.image_url = image_url;
+  this.price = price;
+  this.rating = rating;
+  this.url = url;
+}
 
 
 app.listen(PORT, ()=>{
