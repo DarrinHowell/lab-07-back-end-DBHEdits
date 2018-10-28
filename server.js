@@ -7,7 +7,7 @@ const superagent = require('superagent');
 
 require('dotenv').config();
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 
@@ -44,6 +44,9 @@ function handleError(err, res) {
 }
 
 
+// app.get('/yelp', getFood);
+
+
 
 
 
@@ -59,7 +62,7 @@ function handleError(err, res) {
 // The function then consructs a new locaiton based on the geo.json data at index 0.
 // The search query property is added to the object, and then this data is returned.
 function searchToLatLong(query){
-  const _URL = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${process.env.GOOGLE_GEOCODE}`;
+  const _URL = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${process.env.GEOCODE_API_KEY}`;
   console.log('query is: ', query);
   return superagent.get(_URL)
     .then(data => {
@@ -85,8 +88,16 @@ function Location(data){
 }
 
 
+// This function is essentially the same event listener as the app.get above, and it triggers when it
+// sees /weather in the URL. This function receives the location as the request from the front end.
+// We then send this request (which is the location data from the front end) into our getWeatherData  function,
+// and we recieve back weather data in the form that we prescribe.
+// We then send the weather data back to the front end client via response.send().
+// app.get('/weather', (request, response) => {
+//   // const weatherData = getWeatherData(request.query.data);
+//   // response.send(weatherData);
 function getWeather(request, response){
-  const _URL = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
+  const _URL = `https://api.darksky.net/forecast/${process.env.DARKSKY_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
 
   return superagent.get(_URL)
     .then(result => {
@@ -103,26 +114,6 @@ function getWeather(request, response){
 }
 
 
-// This function is essentially the same event listener as the app.get above, and it triggers when it
-// sees /weather in the URL. This function receives the location as the request from the front end.
-// We then send this request (which is the location data from the front end) into our getWeatherData  function,
-// and we recieve back weather data in the form that we prescribe.
-// We then send the weather data back to the front end client via response.send().
-// app.get('/weather', (request, response) => {
-//   // const weatherData = getWeatherData(request.query.data);
-//   // response.send(weatherData);
-
-// })
-
-// function getWeatherData(query){
-//   const darksky = require('./data/darksky.json');
-//   // const weatherArray = [];
-//   const weather = darksky.daily.data.map((item)=>{
-//     return new Weather(item);
-//   });
-//   return weatherArray;
-// }
-
 function Weather(data){
   this.time = new Date(data.time*1000).toString().slice(0,15);
   this.forecast = data.summary;
@@ -130,6 +121,23 @@ function Weather(data){
 
 }
 
+
+// function getFood(request, response){
+//   const _URL = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
+
+//   return superagent.get(_URL)
+//     .then(result => {
+//       let weatherSummary = result.body.daily.data.map(day => {
+//         // console.log('this is the structure of time for each day: ', day.time);
+//         // console.log('this is the structure of te summary for each day: ', day.summary);
+//         return new Weather(day);
+//       })
+//       console.log('this is our weather summary data', weatherSummary);
+//       response.send(weatherSummary);
+//     })
+
+//     .catch(error => handleError(error, response));
+// }
 
 
 app.listen(PORT, ()=>{
