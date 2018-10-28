@@ -98,11 +98,8 @@ function getWeather(request, response){
   return superagent.get(_URL)
     .then(result => {
       let weatherSummary = result.body.daily.data.map(day => {
-        // console.log('this is the structure of time for each day: ', day.time);
-        // console.log('this is the structure of te summary for each day: ', day.summary);
         return new Weather(day);
       })
-      console.log('this is our weather summary data', weatherSummary);
       response.send(weatherSummary);
     })
 
@@ -113,23 +110,23 @@ function getWeather(request, response){
 function Weather(data){
   this.time = new Date(data.time*1000).toString().slice(0,15);
   this.forecast = data.summary;
-  console.log(data.summary);
-
 }
 
 
 function getFood(request, response){
-  const _URL = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
-
-  return superagent.get(_URL)
+  const _yelpURL = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
+  console.log('this is my _yelpURL: ', _yelpURL);
+  return superagent.get(_yelpURL)
     .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
     .then(result => {
-      let restaurantData = result.businesses.map(restaurantArr => {
-        return new Restaurant(restaurantArr.name, restaurantArr.image_url,
+      let parsedData = JSON.parse(result.text);
+      console.log('this is our result', parsedData);
+      let restaurantData = parsedData.businesses.map(restaurantArr => {
+        let yelpData = new Restaurant(restaurantArr.name, restaurantArr.image_url,
           restaurantArr.price, restaurantArr.rating,
           restaurantArr.url);
-      })
-      console.log('this is our restaurant data', restaurantData);
+        return yelpData;
+      });
       response.send(restaurantData);
     })
     .catch(error => handleError(error, response));
