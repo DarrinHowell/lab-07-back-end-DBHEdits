@@ -1,14 +1,25 @@
 {
-  "name": "demo",
+  "name": "lab-07-back-end-dbhedits",
   "version": "1.0.0",
-  "description": "301d39 Server Demo",
+  "description": "lab-07-api-querying",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
-  "author": "Tanner & Pablo",
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DarrinHowell/lab-07-back-end-DBHEdits.git"
+  },
+  "keywords": [
+    "lab-07"
+  ],
+  "author": "darrinhowell",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DarrinHowell/lab-07-back-end-DBHEdits/issues"
+  },
+  "homepage": "https://github.com/DarrinHowell/lab-07-back-end-DBHEdits#readme",
   "dependencies": {
     "cors": "^2.8.4",
     "dotenv": "^6.1.0",

@@ -7,7 +7,7 @@ const superagent = require('superagent');
 
 require('dotenv').config();
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 const app = express();
 
@@ -38,19 +38,14 @@ app.get('/location', (request, response)=>{
 
 app.get('/weather', getWeather);
 
+app.get('/yelp', getFood);
+
+app.get('/movies', getMovies);
+
 function handleError(err, res) {
   console.error('err - ', err);
   if(res)res.status(500).send('Sorry, something went wrong');
 }
-
-
-
-
-
-//   const locationData = searchToLatLong(request.query.data);
-//   response.send(locationData);
-//   console.log('this is our data:', request.query.data);
-// });
 
 // Note: anything dependent on the above code will require a dot then when we query from actual databases
 // because this call is asynchronous.
@@ -59,7 +54,7 @@ function handleError(err, res) {
 // The function then consructs a new locaiton based on the geo.json data at index 0.
 // The search query property is added to the object, and then this data is returned.
 function searchToLatLong(query){
-  const _URL = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${process.env.GOOGLE_GEOCODE}`;
+  const _URL = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${process.env.GEOCODE_API_KEY}`;
   console.log('query is: ', query);
   return superagent.get(_URL)
     .then(data => {
@@ -70,11 +65,6 @@ function searchToLatLong(query){
         return location;
       }
     });
-  // const geoData = require('./data/geo.json');
-  // const location = new Location(geoData.results[0]);
-  // location.search_query = query;
-  // console.log(location);
-  // return location;
 }
 
 // Constructs a location object with the geo.json data input above.
@@ -85,22 +75,7 @@ function Location(data){
 }
 
 
-function getWeather(request, response){
-  const _URL = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
-
-  return superagent.get(_URL)
-    .then(result => {
-      let weatherSummary = result.body.daily.data.map(day => {
-        // console.log('this is the structure of time for each day: ', day.time);
-        // console.log('this is the structure of te summary for each day: ', day.summary);
-        return new Weather(day);
-      })
-      console.log('this is our weather summary data', weatherSummary);
-      response.send(weatherSummary);
-    })
-
-    .catch(error => handleError(error, response));
-}
+///////////////////////////////////////////////////////////////////////////////////////
 
 
 // This function is essentially the same event listener as the app.get above, and it triggers when it
@@ -111,24 +86,99 @@ function getWeather(request, response){
 // app.get('/weather', (request, response) => {
 //   // const weatherData = getWeatherData(request.query.data);
 //   // response.send(weatherData);
+function getWeather(request, response){
+  const _URL = `https://api.darksky.net/forecast/${process.env.DARKSKY_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
 
-// })
+  return superagent.get(_URL)
+    .then(result => {
+      let weatherSummary = result.body.daily.data.map(day => {
+        return new Weather(day);
+      })
+      response.send(weatherSummary);
+    })
 
-// function getWeatherData(query){
-//   const darksky = require('./data/darksky.json');
-//   // const weatherArray = [];
-//   const weather = darksky.daily.data.map((item)=>{
-//     return new Weather(item);
-//   });
-//   return weatherArray;
-// }
+    .catch(error => handleError(error, response));
+}
+
 
 function Weather(data){
   this.time = new Date(data.time*1000).toString().slice(0,15);
   this.forecast = data.summary;
-  console.log(data.summary);
-
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+function getFood(request, response){
+  const _yelpURL = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
+  return superagent.get(_yelpURL)
+    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+    // attribution to superagent docs for setting authorization key. 
+
+    .then(result => {
+      let parsedData = JSON.parse(result.text);
+      let restaurantData = parsedData.businesses.map(restaurantArr => {
+        let yelpData = new Restaurant(restaurantArr.name, restaurantArr.image_url,
+          restaurantArr.price, restaurantArr.rating,
+          restaurantArr.url);
+        return yelpData;
+      });
+      response.send(restaurantData);
+    })
+    .catch(error => handleError(error, response));
+}
+
+
+function Restaurant(name, image_url, price, rating, url){
+  this.name = name;
+  this.image_url = image_url;
+  this.price = price;
+  this.rating = rating;
+  this.url = url;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+function getMovies(request, response){
+
+  let queryByCity = request.query.data.formatted_query.split(',')[0];
+
+  const _moviesDBURL = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&query=${queryByCity}`;
+  // attribution to Caity Heath, my partner in code challenge 9, for the inspiration
+  // to query by city. 
+
+  return superagent.get(_moviesDBURL)
+    .then(result => {
+      let movieJSON = JSON.parse(result.text);
+      let movieData = movieJSON.results.map(movieArr => {
+        let movieInstance = new Movie(movieArr.title, movieArr.overview,
+          movieArr.vote_average, movieArr.vote_count,
+          movieArr.poster_path, movieArr.popularity, movieArr.release_date);
+        console.log('this is our movieArray: ', movieInstance);
+        return movieInstance;
+      });
+      response.send(movieData);
+    })
+    .catch(error => handleError(error, response));
+}
+
+
+function Movie(title, overview, average_votes, total_votes, image_url,
+  popularity, released_on){
+  this.title = title;
+  this.overview = overview;
+  this.average_votes = average_votes;
+  this.total_votes = total_votes;
+  this.image_url = `https://image.tmdb.org/t/p/w200_and_h300_bestv2/${image_url}`;
+  this.popularity = popularity;
+  this.released_on = released_on;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
 
 
 
