@@ -40,16 +40,12 @@ app.get('/weather', getWeather);
 
 app.get('/yelp', getFood);
 
+app.get('/movies', getMovies);
+
 function handleError(err, res) {
   console.error('err - ', err);
   if(res)res.status(500).send('Sorry, something went wrong');
 }
-
-
-//   const locationData = searchToLatLong(request.query.data);
-//   response.send(locationData);
-//   console.log('this is our data:', request.query.data);
-// });
 
 // Note: anything dependent on the above code will require a dot then when we query from actual databases
 // because this call is asynchronous.
@@ -69,11 +65,6 @@ function searchToLatLong(query){
         return location;
       }
     });
-  // const geoData = require('./data/geo.json');
-  // const location = new Location(geoData.results[0]);
-  // location.search_query = query;
-  // console.log(location);
-  // return location;
 }
 
 // Constructs a location object with the geo.json data input above.
@@ -82,6 +73,9 @@ function Location(data){
   this.latitude = data.geometry.location.lat;
   this.longitude = data.geometry.location.lng;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
 
 
 // This function is essentially the same event listener as the app.get above, and it triggers when it
@@ -113,14 +107,18 @@ function Weather(data){
 }
 
 
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+
 function getFood(request, response){
   const _yelpURL = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
-  console.log('this is my _yelpURL: ', _yelpURL);
   return superagent.get(_yelpURL)
     .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
+    // attribution to superagent docs for setting authorization key. 
+
     .then(result => {
       let parsedData = JSON.parse(result.text);
-      console.log('this is our result', parsedData);
       let restaurantData = parsedData.businesses.map(restaurantArr => {
         let yelpData = new Restaurant(restaurantArr.name, restaurantArr.image_url,
           restaurantArr.price, restaurantArr.rating,
@@ -140,6 +138,48 @@ function Restaurant(name, image_url, price, rating, url){
   this.rating = rating;
   this.url = url;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+
+
+function getMovies(request, response){
+
+  let queryByCity = request.query.data.formatted_query.split(',')[0];
+
+  const _moviesDBURL = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&query=${queryByCity}`;
+  // attribution to Caity Heath, my partner in code challenge 9, for the inspiration
+  // to query by city. 
+
+  return superagent.get(_moviesDBURL)
+    .then(result => {
+      let movieJSON = JSON.parse(result.text);
+      let movieData = movieJSON.results.map(movieArr => {
+        let movieInstance = new Movie(movieArr.title, movieArr.overview,
+          movieArr.vote_average, movieArr.vote_count,
+          movieArr.poster_path, movieArr.popularity, movieArr.release_date);
+        console.log('this is our movieArray: ', movieInstance);
+        return movieInstance;
+      });
+      response.send(movieData);
+    })
+    .catch(error => handleError(error, response));
+}
+
+
+function Movie(title, overview, average_votes, total_votes, image_url,
+  popularity, released_on){
+  this.title = title;
+  this.overview = overview;
+  this.average_votes = average_votes;
+  this.total_votes = total_votes;
+  this.image_url = `https://image.tmdb.org/t/p/w200_and_h300_bestv2/${image_url}`;
+  this.popularity = popularity;
+  this.released_on = released_on;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+
 
 
 app.listen(PORT, ()=>{
